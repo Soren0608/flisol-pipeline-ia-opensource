@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>colombia_abierta :: flisol 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800;9..144,900&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:        #0a0d0c;
+    --bg-alt:    #11161a;
+    --ink:       #e8e1cf;
+    --muted:     #7a7568;
+    --phosphor:  #ffb84d;   /* ámbar terminal */
+    --phosphor-dim: #8a5f1f;
+    --rojo:      #ce1126;   /* bandera */
+    --azul:      #003893;
+    --amarillo:  #fcd116;
+    --line:      #1f2520;
+    --grid:      rgba(255, 184, 77, 0.04);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 14px;
+    line-height: 1.55;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* grid de fondo tipo papel milimetrado */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* efecto scanline muy sutil */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0,
+      transparent 3px,
+      rgba(0, 0, 0, 0.12) 3px,
+      rgba(0, 0, 0, 0.12) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+    mix-blend-mode: multiply;
+  }
+
+  /* ───── layout ───── */
+  main {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 32px 40px 60px;
+  }
+
+  header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 32px;
+  }
+
+  .brand {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .brand-meta {
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    color: var(--phosphor);
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .brand-title {
+    font-family: "Fraunces", serif;
+    font-size: clamp(28px, 4.2vw, 56px);
+    font-weight: 900;
+    line-height: 0.96;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+
+  .brand-title em {
+    font-style: italic;
+    color: var(--phosphor);
+    font-weight: 400;
+  }
+
+  .brand-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  /* panel de estadísticas vivas */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, auto);
+    gap: 28px;
+    align-self: end;
+    padding: 14px 20px;
+    border: 1px solid var(--line);
+    background: var(--bg-alt);
+    position: relative;
+  }
+
+  .stats::before {
+    content: "LIVE";
+    position: absolute;
+    top: -9px;
+    left: 14px;
+    background: var(--bg);
+    padding: 0 8px;
+    font-size: 9px;
+    color: var(--rojo);
+    letter-spacing: 0.3em;
+    font-weight: 700;
+  }
+
+  .stats::after {
+    content: "●";
+    position: absolute;
+    top: -8px;
+    left: 0;
+    color: var(--rojo);
+    font-size: 11px;
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+
+  .stat-label {
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .stat-value {
+    font-family: "Fraunces", serif;
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--phosphor);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    margin-top: 4px;
+  }
+
+  /* ───── consola ───── */
+  .console {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 24px;
+    min-height: 60vh;
+  }
+
+  @media (max-width: 960px) {
+    .console { grid-template-columns: 1fr; }
+    header { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  /* columna izquierda: conversación */
+  .chat {
+    border: 1px solid var(--line);
+    background: var(--bg-alt);
+    display: flex;
+    flex-direction: column;
+    min-height: 560px;
+  }
+
+  .chat-header {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  .chat-header .dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #1f2520;
+    border: 1px solid #2d3530;
+  }
+
+  .dot.live { background: var(--phosphor); box-shadow: 0 0 8px var(--phosphor); }
+
+  .messages {
+    flex: 1;
+    padding: 24px 28px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--phosphor-dim) transparent;
+  }
+
+  .messages::-webkit-scrollbar { width: 6px; }
+  .messages::-webkit-scrollbar-thumb { background: var(--phosphor-dim); }
+
+  .msg { margin-bottom: 28px; animation: fadein 0.4s ease; }
+
+  @keyframes fadein {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg-role {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .msg-role::before {
+    content: "";
+    width: 6px; height: 6px;
+    background: var(--muted);
+    border-radius: 50%;
+  }
+
+  .msg.user .msg-role::before { background: var(--azul); }
+  .msg.assistant .msg-role::before { background: var(--phosphor); box-shadow: 0 0 6px var(--phosphor); }
+
+  .msg-body {
+    font-size: 14px;
+    color: var(--ink);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .msg.assistant .msg-body {
+    border-left: 2px solid var(--phosphor);
+    padding-left: 14px;
+  }
+
+  /* cursor parpadeante mientras genera */
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 15px;
+    background: var(--phosphor);
+    margin-left: 2px;
+    animation: blink 1s steps(2) infinite;
+    vertical-align: text-bottom;
+  }
+
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* chunks recuperados */
+  .chunks {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border: 1px dashed var(--line);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .chunks-header {
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: var(--phosphor);
+    margin-bottom: 8px;
+  }
+
+  .chunk {
+    padding: 6px 0;
+    border-bottom: 1px dotted var(--line);
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    gap: 10px;
+    align-items: start;
+  }
+
+  .chunk:last-child { border-bottom: none; }
+
+  .chunk-num {
+    color: var(--phosphor-dim);
+    font-weight: 600;
+  }
+
+  .chunk-text { color: var(--ink); opacity: 0.75; }
+
+  .chunk-meta {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    color: var(--phosphor-dim);
+    white-space: nowrap;
+  }
+
+  /* input */
+  .composer {
+    border-top: 1px solid var(--line);
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 12px;
+    align-items: center;
+    background: var(--bg);
+  }
+
+  .prompt {
+    color: var(--phosphor);
+    font-weight: 600;
+    user-select: none;
+  }
+
+  #input {
+    background: transparent;
+    border: none;
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    width: 100%;
+  }
+
+  #input::placeholder { color: var(--muted); }
+
+  #send {
+    background: var(--phosphor);
+    color: var(--bg);
+    border: none;
+    padding: 8px 16px;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  #send:hover { background: var(--ink); }
+  #send:disabled { opacity: 0.3; cursor: wait; }
+
+  /* columna derecha: info lateral */
+  aside {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .card {
+    border: 1px solid var(--line);
+    background: var(--bg-alt);
+    padding: 20px;
+  }
+
+  .card-label {
+    font-size: 9px;
+    letter-spacing: 0.25em;
+    color: var(--phosphor);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+
+  .stack-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .pill {
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    font-size: 11px;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .pill span {
+    font-size: 8px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+  }
+
+  /* preguntas sugeridas */
+  .suggestions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .suggestion {
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s;
+    line-height: 1.4;
+  }
+
+  .suggestion:hover {
+    border-color: var(--phosphor);
+    color: var(--phosphor);
+    transform: translateX(3px);
+  }
+
+  .suggestion::before {
+    content: "▸ ";
+    color: var(--phosphor);
+  }
+
+  /* franja tricolor sutil en el footer */
+  footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .tricolor {
+    display: flex;
+    height: 3px;
+    width: 60px;
+  }
+  .tricolor span { flex: 1; }
+  .tricolor .y { background: var(--amarillo); flex: 2; }
+  .tricolor .b { background: var(--azul); }
+  .tricolor .r { background: var(--rojo); }
+
+  /* badges de estado */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+  }
+
+  .badge::before {
+    content: "";
+    width: 6px; height: 6px;
+    background: var(--phosphor);
+    border-radius: 50%;
+    box-shadow: 0 0 6px var(--phosphor);
+  }
+
+  /* efecto de "typing" en el header */
+  @keyframes type-cursor {
+    50% { opacity: 0; }
+  }
+
+  .typewriter::after {
+    content: "_";
+    color: var(--phosphor);
+    animation: type-cursor 1s steps(2) infinite;
+    margin-left: 2px;
+  }
+
+  /* hint de intro */
+  .intro-hint {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+
+  .intro-hint h2 {
+    font-family: "Fraunces", serif;
+    font-size: 32px;
+    font-weight: 400;
+    font-style: italic;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+
+  .intro-hint p { max-width: 420px; margin: 0 auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+
+  <!-- ═════ HEADER ═════ -->
+  <header>
+    <div class="brand">
+      <div class="brand-meta">flisol pereira · 2026 · @camilo_data</div>
+      <h1 class="brand-title">colombia<em>_abierta</em><span class="typewriter"></span></h1>
+      <div class="brand-sub">IA soberana · datos reales · 0 api keys · 0 nube · 0 pesos</div>
+    </div>
+
+    <div class="stats" id="stats">
+      <div>
+        <div class="stat-label">consultas</div>
+        <div class="stat-value" id="stat-queries">0</div>
+      </div>
+      <div>
+        <div class="stat-label">tokens ∫</div>
+        <div class="stat-value" id="stat-tokens">0</div>
+      </div>
+      <div>
+        <div class="stat-label">usd ahorrados</div>
+        <div class="stat-value" id="stat-saved" style="color: var(--rojo);">$0.00</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═════ CONSOLE ═════ -->
+  <section class="console">
+
+    <div class="chat">
+      <div class="chat-header">
+        <div>
+          <span class="dot live"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+          &nbsp;&nbsp;/colombia_abierta/rag
+        </div>
+        <div class="badge" id="status-badge">ollama · llama3.2 · chromadb</div>
+      </div>
+
+      <div class="messages" id="messages">
+        <div class="intro-hint" id="intro">
+          <h2>pregúntale a Colombia</h2>
+          <p>Los datos son públicos. El modelo corre en mi máquina. Ningún byte sale del país. Escribe una pregunta abajo o elige una sugerida →</p>
+        </div>
+      </div>
+
+      <form class="composer" id="form">
+        <span class="prompt">➜</span>
+        <input
+          id="input"
+          type="text"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="¿qué contratos públicos hay en Pereira?"
+          autofocus
+        />
+        <button id="send" type="submit">ENVIAR ⏎</button>
+      </form>
+    </div>
+
+    <aside>
+      <div class="card">
+        <div class="card-label">stack ▸ 100% open source</div>
+        <div class="stack-grid">
+          <div class="pill">Python 3.11<span>lenguaje</span></div>
+          <div class="pill">Airflow<span>orquestación</span></div>
+          <div class="pill">ChromaDB<span>vector store</span></div>
+          <div class="pill">Ollama<span>llm runtime</span></div>
+          <div class="pill">Llama 3.2<span>modelo</span></div>
+          <div class="pill">FastAPI<span>servidor</span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">preguntas ▸ rompe el hielo</div>
+        <div class="suggestions" id="suggestions">
+          <button class="suggestion">¿Qué contratos ha firmado la alcaldía de Pereira?</button>
+          <button class="suggestion">Muéstrame proyectos de regalías en salud en Risaralda</button>
+          <button class="suggestion">¿Cuáles son los proveedores más recurrentes del Estado?</button>
+          <button class="suggestion">Instituciones educativas oficiales en zona rural</button>
+          <button class="suggestion">Compara inversión pública entre departamentos</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">fuentes ▸ datos.gov.co</div>
+        <div style="font-size: 11px; color: var(--muted); line-height: 1.7;">
+          ▸ SECOP II · contratos públicos<br>
+          ▸ proyectos de regalías<br>
+          ▸ directorio educativo oficial<br>
+        </div>
+      </div>
+    </aside>
+
+  </section>
+
+  <footer>
+    <div>código ▸ <span style="color: var(--phosphor);">github.com/camilo-data/flisol-rag</span></div>
+    <div class="tricolor">
+      <span class="y"></span>
+      <span class="b"></span>
+      <span class="r"></span>
+    </div>
+    <div>hecho en cartago · valle · colombia</div>
+  </footer>
+
+</main>
+
+<script>
+  // ═════════════════════════════════════════════════════════════════
+  //  Estado global
+  // ═════════════════════════════════════════════════════════════════
+  const $messages = document.getElementById("messages");
+  const $form = document.getElementById("form");
+  const $input = document.getElementById("input");
+  const $send = document.getElementById("send");
+  const $intro = document.getElementById("intro");
+  const $statQueries = document.getElementById("stat-queries");
+  const $statTokens = document.getElementById("stat-tokens");
+  const $statSaved = document.getElementById("stat-saved");
+
+  let state = { queries: 0, tokens: 0, saved: 0 };
+
+  // animación de "count up" para los stats
+  const animateNumber = (el, from, to, format, duration = 800) => {
+    const start = performance.now();
+    const step = (now) => {
+      const p = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = format(from + (to - from) * eased);
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+
+  const fmtInt = (n) => Math.round(n).toLocaleString("es-CO");
+  const fmtUSD = (n) => "$" + n.toFixed(n < 1 ? 4 : 2);
+
+  // GPT-4o: ~$2.50/1M input + $10/1M output → promedio $6.25/1M
+  const PRICE_PER_TOKEN = 6.25e-6;
+
+  const updateStats = (newTokens) => {
+    const prev = { ...state };
+    state.queries += 1;
+    state.tokens += newTokens;
+    state.saved = state.tokens * PRICE_PER_TOKEN;
+    animateNumber($statQueries, prev.queries, state.queries, fmtInt);
+    animateNumber($statTokens, prev.tokens, state.tokens, fmtInt);
+    animateNumber($statSaved, prev.saved, state.saved, fmtUSD);
+  };
+
+  // ═════════════════════════════════════════════════════════════════
+  //  Render de mensajes
+  // ═════════════════════════════════════════════════════════════════
+  const addMessage = (role, content = "") => {
+    if ($intro) { $intro.remove(); }
+    const div = document.createElement("div");
+    div.className = `msg ${role}`;
+    div.innerHTML = `
+      <div class="msg-role">${role === "user" ? "tú" : "llama3.2 · local"}</div>
+      <div class="msg-body"></div>
+    `;
+    div.querySelector(".msg-body").textContent = content;
+    $messages.appendChild(div);
+    $messages.scrollTop = $messages.scrollHeight;
+    return div;
+  };
+
+  const addChunksPanel = (parent, chunks) => {
+    const panel = document.createElement("div");
+    panel.className = "chunks";
+    panel.innerHTML = `<div class="chunks-header">▸ ${chunks.length} fragmentos recuperados</div>`;
+    chunks.forEach((c, i) => {
+      const row = document.createElement("div");
+      row.className = "chunk";
+      row.innerHTML = `
+        <div class="chunk-num">${String(i+1).padStart(2, "0")}</div>
+        <div class="chunk-text">${escapeHtml(c.text)}</div>
+        <div class="chunk-meta">${escapeHtml(c.source)} · d=${c.distance}</div>
+      `;
+      panel.appendChild(row);
+    });
+    parent.appendChild(panel);
+  };
+
+  const escapeHtml = (s) =>
+    String(s).replace(/[&<>"']/g, c => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;",
+      '"': "&quot;", "'": "&#39;"
+    }[c]));
+
+  // ═════════════════════════════════════════════════════════════════
+  //  Streaming SSE via fetch + ReadableStream
+  // ═════════════════════════════════════════════════════════════════
+  async function askRAG(question) {
+    addMessage("user", question);
+    const assistantMsg = addMessage("assistant", "");
+    const body = assistantMsg.querySelector(".msg-body");
+    const cursor = document.createElement("span");
+    cursor.className = "cursor";
+    body.appendChild(cursor);
+
+    $send.disabled = true;
+
+    try {
+      const response = await fetch("/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question }),
+      });
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let answerText = "";
+      let chunksData = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const events = buffer.split("\n\n");
+        buffer = events.pop();  // último puede estar incompleto
+
+        for (const raw of events) {
+          const lines = raw.split("\n");
+          const evt = (lines.find(l => l.startsWith("event:")) || "").slice(6).trim();
+          const dataLine = lines.find(l => l.startsWith("data:"));
+          if (!dataLine) continue;
+          const data = JSON.parse(dataLine.slice(5).trim());
+
+          if (evt === "chunks") {
+            chunksData = data.items;
+          } else if (evt === "token") {
+            answerText += data.t;
+            cursor.remove();
+            body.textContent = answerText;
+            body.appendChild(cursor);
+            $messages.scrollTop = $messages.scrollHeight;
+          } else if (evt === "done") {
+            cursor.remove();
+            if (chunksData) addChunksPanel(assistantMsg, chunksData);
+            const tokenEstimate = Math.round(answerText.length / 4) + 800; // incluye contexto
+            updateStats(tokenEstimate);
+          }
+        }
+      }
+    } catch (err) {
+      cursor.remove();
+      body.textContent = "⚠ error: " + err.message;
+    } finally {
+      $send.disabled = false;
+      $input.focus();
+    }
+  }
+
+  // ═════════════════════════════════════════════════════════════════
+  //  Eventos
+  // ═════════════════════════════════════════════════════════════════
+  $form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const q = $input.value.trim();
+    if (!q) return;
+    $input.value = "";
+    askRAG(q);
+  });
+
+  document.querySelectorAll(".suggestion").forEach(btn => {
+    btn.addEventListener("click", () => {
+      $input.value = btn.textContent;
+      $input.focus();
+    });
+  });
+
+  // Easter egg: Konami / shortcut para reset stats
+  document.addEventListener("keydown", (e) => {
+    if (e.ctrlKey && e.shiftKey && e.key === "R") {
+      state = { queries: 0, tokens: 0, saved: 0 };
+      $statQueries.textContent = "0";
+      $statTokens.textContent = "0";
+      $statSaved.textContent = "$0.00";
+    }
+  });
+</script>
+
+</body>
+</html>

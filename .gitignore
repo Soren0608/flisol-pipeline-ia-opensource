@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+.venv/
+*.egg-info/
+.pytest_cache/
+
+# Datos generados (se regeneran corriendo make all)
+data/raw/*.json
+data/processed/*.jsonl
+data/chroma/
+
+# Entorno
+.env
+.env.local
+
+# Editores
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Logs
+*.log
+logs/
